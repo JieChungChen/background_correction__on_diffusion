@@ -1,4 +1,5 @@
 *.tif
 
 __pycache__/
+valid_data_n/
 
