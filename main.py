@@ -19,7 +19,7 @@ def get_args_parser():
     parser.add_argument('--load_weight', default=None, type=str)
     parser.add_argument('--device', default='cuda:0', type=str)
     parser.add_argument('--batch_size', default=8, type=int)
-    parser.add_argument('--epoch', default=10, type=int)
+    parser.add_argument('--epoch', default=100, type=int)
 
     parser.add_argument('--model_name', default='DTransformer_Stan', type=str) 
     parser.add_argument('--finetune', default=False, type=bool)   
@@ -83,7 +83,7 @@ def main(args):
                     "LR": optimizer.state_dict()['param_groups'][0]["lr"]
                 })
         # warmUpScheduler.step()
-        if (e+1)%10==0:
+        if (e+1)%5==0:
             torch.save(model.state_dict(), '%s/ckpt_%d.pt'%(args.model_save_dir, e+1))
 
 
