@@ -1,0 +1,8 @@
+# Define the number of dimensions we are working on
+dim = 2
+
+# Define the image coordinates
+20230505_Blue3-b2-60s-m2_0003.tif; ; (0.0, 0.0)
+20230505_Blue3-b2-60s-m2_0004.tif; ; (409.0, 0.0)
+20230505_Blue3-b2-60s-m2_0001.tif; ; (0.0, 409.0)
+20230505_Blue3-b2-60s-m2_0002.tif; ; (409.0, 409.0)

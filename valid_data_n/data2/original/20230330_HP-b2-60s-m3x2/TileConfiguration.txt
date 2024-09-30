@@ -1,0 +1,10 @@
+# Define the number of dimensions we are working on
+dim = 2
+
+# Define the image coordinates
+20230330_HP-b2-60s-m3x2_0005.tif; ; (0.0, 0.0)
+20230330_HP-b2-60s-m3x2_0006.tif; ; (409.0, 0.0)
+20230330_HP-b2-60s-m3x2_0003.tif; ; (0.0, 409.0)
+20230330_HP-b2-60s-m3x2_0004.tif; ; (409.0, 409.0)
+20230330_HP-b2-60s-m3x2_0001.tif; ; (0.0, 818.0)
+20230330_HP-b2-60s-m3x2_0002.tif; ; (409.0, 818.0)

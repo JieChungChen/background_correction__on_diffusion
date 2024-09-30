@@ -1,0 +1,8 @@
+# Define the number of dimensions we are working on
+dim = 2
+
+# Define the image coordinates
+20230222_Sb_m4-2-b2-60s 13um_OCV_0003.tif; ; (0.0, 0.0)
+20230222_Sb_m4-2-b2-60s 13um_OCV_0004.tif; ; (409.0, 0.0)
+20230222_Sb_m4-2-b2-60s 13um_OCV_0001.tif; ; (0.0, 409.0)
+20230222_Sb_m4-2-b2-60s 13um_OCV_0002.tif; ; (409.0, 409.0)
