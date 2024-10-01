@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from tqdm import tqdm
 
 
 def extract(v, t, x_shape):
@@ -78,8 +79,8 @@ class GaussianDiffusionSampler(nn.Module):
         Algorithm 2.
         """
         x_t = x_T
-        for time_step in reversed(range(self.T)):
-            print(time_step)
+        for time_step in tqdm(reversed(range(self.T)), dynamic_ncols=True, desc='Denoise Step'):
+            # print(time_step)
             t = x_t.new_ones([x_T.shape[0], ], dtype=torch.long) * time_step
             mean, var= self.p_mean_variance(condit, x_t, t)
             if time_step > 0:

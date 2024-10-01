@@ -117,7 +117,7 @@ class ResBlock(nn.Module):
 
 
 class Diffusion_UNet(nn.Module):
-    def __init__(self, ch=32, ch_mult=[1, 2, 2, 2], num_res_blocks=2, dropout=0.15):
+    def __init__(self, ch=64, ch_mult=[1, 2, 2, 2], num_res_blocks=2, dropout=0.15):
         super().__init__()
         tdim = ch
         self.time_embedding = TimeEmbedding(tdim)
