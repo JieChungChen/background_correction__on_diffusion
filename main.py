@@ -8,7 +8,7 @@ from torch.utils.data.distributed import DistributedSampler
 from data_preprocess import NanoCT_Dataset
 from ddpm.model import Diffusion_UNet
 from ddpm.diffusion import GaussianDiffusionTrainer
-from utils import check_distributed
+from utils import check_distributed, model_eval
 
 
 
@@ -16,19 +16,18 @@ def get_args_parser():
     parser = argparse.ArgumentParser('diffusion for background correction', add_help=False)
     parser.add_argument('--data_dir', default='./training_data_n', type=str)
     parser.add_argument('--model_save_dir', default='./checkpoints', type=str)
-    parser.add_argument('--load_weight', default=None, type=str)
+    parser.add_argument('--load_weight', default=False, type=bool)
     parser.add_argument('--device', default='cuda:0', type=str)
-    parser.add_argument('--batch_size', default=8, type=int)
+    parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--epoch', default=100, type=int)
 
-    parser.add_argument('--model_name', default='DTransformer_Stan', type=str) 
-    parser.add_argument('--finetune', default=False, type=bool)   
-    parser.add_argument('--checkpoint', default='DTransformer_checkpoint.pth', type=str)                  
+    parser.add_argument('--model_name', default='DeRef_DDPM', type=str) 
+    parser.add_argument('--checkpoint', default='ckpt_100.pt', type=str)                  
 
     parser.add_argument('--T', default=1000, type=float)
     parser.add_argument('--beta_1', default=1e-4, type=float)
     parser.add_argument('--beta_T', default=0.02, type=float)
-    parser.add_argument('--img_size', default=128, type=int)
+    parser.add_argument('--img_size', default=32, type=int)
     parser.add_argument('--weight_decay', default=1e-4, type=float)
     parser.add_argument('--lr', default=1e-4, type=float)
     parser.add_argument('--grad_clip', default=1., type=float)
@@ -46,7 +45,6 @@ def main(args):
     else:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    # device = torch.device(args.device)
     os.makedirs(args.model_save_dir, exist_ok=True)
     model = Diffusion_UNet().to(device)
     dataset = NanoCT_Dataset(data_dir='./training_data_n', img_size=args.img_size)
@@ -57,8 +55,8 @@ def main(args):
     else:
         dataloader = DataLoader(dataset, batch_size=args.batch_size, num_workers=4, drop_last=True, pin_memory=True)
 
-    if args.load_weight is not None:
-        model.load_state_dict(torch.load(args.model_save_dir+'/'+args.load_weight, map_location=device), strict=False)
+    if args.load_weight:
+        model.load_state_dict(torch.load(args.model_save_dir+'/'+args.checkpoint, map_location=device), strict=False)
         print("Model weight load down.")
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     trainer = GaussianDiffusionTrainer(model, args.beta_1, args.beta_T, args.T).to(device)
@@ -87,6 +85,12 @@ def main(args):
             torch.save(model.state_dict(), '%s/ckpt_%d.pt'%(args.model_save_dir, e+1))
 
 
+def evaluation(args):
+    dataset = NanoCT_Dataset(data_dir='./training_data_n', img_size=args.img_size)
+    model_eval(dataset, args)
+
+
 if __name__ == '__main__':
     args = get_args_parser().parse_args()
+    # evaluation(args)
     main(args)

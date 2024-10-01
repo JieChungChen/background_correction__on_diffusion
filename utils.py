@@ -2,6 +2,7 @@ import os
 import torch
 import matplotlib as mpl
 mpl.use('Agg')
+mpl.rcParams['figure.dpi'] = 200
 import matplotlib.pyplot as plt
 from ddpm.model import Diffusion_UNet
 from ddpm.diffusion import GaussianDiffusionSampler
@@ -18,27 +19,40 @@ def check_distributed():
     return rank, local_rank, world_size, is_distributed
 
 
-def model_eval(model, dataset, args):
+def model_eval(dataset, args):
     with torch.no_grad():
+        model = Diffusion_UNet().to(args.device)
+        model.load_state_dict(torch.load(args.model_save_dir+'/'+args.checkpoint, map_location=args.device), strict=False)
+        print("Model weight load down.")
         model.eval()
         sampler = GaussianDiffusionSampler(model, args.beta_1, args.beta_T, args.T).to(args.device)
-        noisyImage = torch.randn(size=[1, 3, args.img_size, args.img_size], device=args.device)
+        noisyImage = torch.randn(size=[1, 1, args.img_size, args.img_size], device=args.device)
         # saveNoisy = torch.clamp(noisyImage * 0.5 + 0.5, 0, 1)
-        input_img = dataset[0][0].squeeze().numpy()
-        ref_truth = dataset[0][1].squeeze().numpy()
-        pred = sampler(dataset[0][0], noisyImage).squeeze().cpu().numpy()
+        input_img = dataset[200][0].squeeze().numpy()
+        ref_truth = dataset[200][1].squeeze().numpy()
+        pred = sampler(dataset[0][0].unsqueeze(0).to(args.device), noisyImage).squeeze().cpu().numpy()
         obj_pred = input_img-pred
         fig = plt.figure()
-        plt.subplot(141)
+        plt.subplot(151)
         plt.title('input img')
-        plt.imshow(input_img, cmap='gray', vmin=0, vmax=1)
-        plt.subplot(142)
+        plt.axis('off')
+        plt.imshow(input_img, cmap='gray')
+        plt.subplot(152)
+        plt.title('noise')
+        plt.axis('off')
+        plt.imshow(noisyImage.squeeze().cpu().numpy(), cmap='gray')
+        plt.subplot(153)
         plt.title('ref pred')
-        plt.imshow(pred, cmap='gray', vmin=0, vmax=1)
-        plt.subplot(143)
+        plt.axis('off')
+        plt.imshow(pred, cmap='gray')
+        plt.subplot(154)
         plt.title('ground truth')
-        plt.imshow(ref_truth, cmap='gray', vmin=0, vmax=1)
-        plt.subplot(144)
+        plt.axis('off')
+        plt.imshow(ref_truth, cmap='gray')
+        plt.subplot(155)
         plt.title('input-pred')
-        plt.imshow(obj_pred, cmap='gray', vmin=0, vmax=1)
+        plt.axis('off')
+        plt.imshow(obj_pred, cmap='gray')
         plt.savefig('eval_visualize.png')
+
+    

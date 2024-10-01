@@ -30,8 +30,9 @@ class NanoCT_Dataset(Dataset):
 
         self.input_imgs = [dref*ref for dref in dref_imgs for ref in ref_imgs]
         self.input_imgs = torch.concatenate(self.input_imgs, dim=0).unsqueeze(1)
-        self.input_imgs = self.input_imgs/self.input_imgs.max()
-        self.target_imgs = ref_imgs/ref_imgs.max()
+        # normalize input images to [0, 1]
+        self.input_imgs = self.input_imgs/self.input_imgs.view(num_sample**2, img_size**2).max(dim=1).values.view(-1, 1, 1, 1)
+        self.target_imgs = ref_imgs/ref_imgs.view(num_sample, img_size**2).max(dim=1).values.view(-1, 1, 1, 1)
         self.target_imgs = self.target_imgs.repeat(100, 1, 1, 1)
         # print(self.input_imgs.shape, self.target_imgs.shape)
         print('training data preprocessing finished: %.2f sec'%(time.time()-t_start))
@@ -47,11 +48,11 @@ class NanoCT_Dataset(Dataset):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     data = NanoCT_Dataset('./training_data_n', 128)
-    for i in np.arange(100):
+    for i in np.arange(100)*100:
         fig = plt.figure()
         plt.subplot(121)
-        plt.imshow(data[i][0].squeeze().numpy(), cmap='gray')
+        plt.imshow(data[i][0].squeeze().numpy(), cmap='gray', vmin=0, vmax=1)
         plt.subplot(122)
-        plt.imshow(data[i][1].squeeze().numpy(), cmap='gray')
+        plt.imshow(data[i][1].squeeze().numpy(), cmap='gray', vmin=0, vmax=1)
         plt.show()
         plt.close()

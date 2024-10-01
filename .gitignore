@@ -1,5 +1,9 @@
 *.tif
+*.pt
+*.zip
 
 __pycache__/
 valid_data_n/
 
+
+utils.py
