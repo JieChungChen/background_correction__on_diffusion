@@ -19,7 +19,7 @@ def get_args_parser():
     parser.add_argument('--load_weight', default=False, type=bool)
     parser.add_argument('--device', default='cuda:0', type=str)
     parser.add_argument('--batch_size', default=2, type=int)
-    parser.add_argument('--epoch', default=50, type=int)
+    parser.add_argument('--epoch', default=150, type=int)
 
     parser.add_argument('--model_name', default='DeRef_DDPM', type=str) 
     parser.add_argument('--checkpoint', default='ckpt_50.pt', type=str)                  
@@ -87,5 +87,5 @@ def main(args):
 
 if __name__ == '__main__':
     args = get_args_parser().parse_args()
-    # main(args)
+    main(args)
     model_eval(args)

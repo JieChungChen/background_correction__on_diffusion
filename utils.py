@@ -22,7 +22,7 @@ def check_distributed():
     return rank, local_rank, world_size, is_distributed
 
 
-def model_eval(args):
+def model_eval(args, model=None):
     with torch.no_grad():
         size = args.img_size
         raw_dref = Image.open('./training_data_n/dref/20230222_Sb_m4-1-b2-60s-0.88V_0004.tif').resize((size, size))
