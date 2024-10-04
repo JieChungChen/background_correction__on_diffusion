@@ -66,6 +66,7 @@ def main(args):
         with tqdm(dataloader, dynamic_ncols=True) as tqdmDataLoader:
             for obj_ref, ref in tqdmDataLoader:
                 # train
+                model.train()
                 torch.cuda.empty_cache()
                 b = ref.shape[0]
                 optimizer.zero_grad()
