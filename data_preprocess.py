@@ -8,12 +8,13 @@ import torch
 import time
 
 class NanoCT_Dataset(Dataset):
-    def __init__(self, data_dir, img_size, num_sample=100):
+    def __init__(self, data_dir, img_size, num_sample=100, seed=0):
         t_start = time.time()
         dref_files = sorted(glob.glob("%s/dref/*.tif"%data_dir))
         ref_files = sorted(glob.glob("%s/ref/*.tif"%data_dir))
 
         dref_imgs, ref_imgs = [], []
+        np.random.seed(seed)
         dref_rnd_choose = np.random.choice(len(dref_files), num_sample, replace=False)
         ref_rnd_choose = np.random.choice(len(ref_files), num_sample, replace=False)
         for i in tqdm(dref_rnd_choose, dynamic_ncols=True, desc='load dref images'):

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
+import numpy as np
 
 
 def extract(v, t, x_shape):
@@ -74,13 +75,14 @@ class GaussianDiffusionSampler(nn.Module):
         xt_prev_mean = self.predict_xt_prev_mean_from_eps(x_t, t, eps=eps)
         return xt_prev_mean, var
 
-    def forward(self, condit, x_T):
+    def forward(self, condit, x_T, infer_steps=100):
         """
         Algorithm 2.
         """
         x_t = x_T
-        for time_step in tqdm(reversed(range(self.T)), dynamic_ncols=True, desc='Denoise Step'):
-            # print(time_step)
+        step_ratio = self.T/infer_steps
+        timesteps = (np.arange(0, infer_steps) * step_ratio).round()[::-1].copy().astype(np.int64)
+        for time_step in tqdm(timesteps, dynamic_ncols=True, desc='Denoise Step'):
             t = x_t.new_ones([x_T.shape[0], ], dtype=torch.long) * time_step
             mean, var= self.p_mean_variance(condit, x_t, t)
             if time_step > 0:
