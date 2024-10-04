@@ -75,7 +75,7 @@ class GaussianDiffusionSampler(nn.Module):
         xt_prev_mean = self.predict_xt_prev_mean_from_eps(x_t, t, eps=eps)
         return xt_prev_mean, var
 
-    def forward(self, condit, x_T, infer_steps=100):
+    def forward(self, condit, x_T, infer_steps):
         """
         Algorithm 2.
         """

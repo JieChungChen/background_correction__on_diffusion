@@ -22,13 +22,13 @@ def check_distributed():
     return rank, local_rank, world_size, is_distributed
 
 
-def model_eval(args, model=None, epoch=10):
+def model_eval(args, model=None, epoch=0):
     with torch.no_grad():
         size = args.img_size
         raw_dref = Image.open('./training_data_n/dref/20230222_Sb_m4-1-b2-60s-0.88V_0004.tif').resize((size, size))
         raw_dref = np.array(raw_dref)
         ref_files = sorted(glob.glob("%s/ref/*.tif"%args.data_dir))
-        ref_truth = Image.open(ref_files[4]).resize((size, size))
+        ref_truth = Image.open(ref_files[71]).resize((size, size))
         ref_truth = np.array(ref_truth)
         input_img = raw_dref*ref_truth
         ref_truth = ref_truth/input_img.max()
@@ -42,7 +42,7 @@ def model_eval(args, model=None, epoch=10):
         sampler = GaussianDiffusionSampler(model, args.beta_1, args.beta_T, args.T).to(args.device)
         noisyImage = torch.randn(size=[1, 1, size, size], device=args.device)
         # saveNoisy = torch.clamp(noisyImage * 0.5 + 0.5, 0, 1)
-        pred = sampler(input_img.view(1, 1, size, size).to(args.device), noisyImage).squeeze().cpu().numpy()
+        pred = sampler(input_img.view(1, 1, size, size).to(args.device), noisyImage, infer_steps=args.T).squeeze().cpu().numpy()
         obj_pred = input_img/pred
         fig = plt.figure()
         plt.subplot(231)

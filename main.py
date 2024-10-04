@@ -14,21 +14,21 @@ from utils import check_distributed, model_eval
 
 def get_args_parser():
     parser = argparse.ArgumentParser('diffusion for background correction', add_help=False)
-    parser.add_argument('--train', default=False, type=bool)
+    parser.add_argument('--train', default=True, type=bool)
     parser.add_argument('--data_dir', default='./training_data_n', type=str)
     parser.add_argument('--model_save_dir', default='./checkpoints', type=str)
     parser.add_argument('--load_weight', default=False, type=bool)
     parser.add_argument('--device', default='cuda:0', type=str)
-    parser.add_argument('--batch_size', default=32, type=int)
-    parser.add_argument('--epoch', default=100, type=int)
+    parser.add_argument('--batch_size', default=2, type=int)
+    parser.add_argument('--epoch', default=500, type=int)
 
     parser.add_argument('--model_name', default='DeRef_DDPM', type=str) 
-    parser.add_argument('--checkpoint', default='ckpt_20.pt', type=str)                  
+    parser.add_argument('--checkpoint', default='ckpt_45.pt', type=str)                  
 
-    parser.add_argument('--T', default=1000, type=float)
+    parser.add_argument('--T', default=2000, type=float)
     parser.add_argument('--beta_1', default=1e-4, type=float)
     parser.add_argument('--beta_T', default=0.02, type=float)
-    parser.add_argument('--img_size', default=64, type=int)
+    parser.add_argument('--img_size', default=32, type=int)
     parser.add_argument('--weight_decay', default=1e-4, type=float)
     parser.add_argument('--lr', default=1e-4, type=float)
     parser.add_argument('--grad_clip', default=1., type=float)
@@ -82,7 +82,7 @@ def main(args):
                     "LR": optimizer.state_dict()['param_groups'][0]["lr"]
                 })
         # warmUpScheduler.step()
-        if (e+1)%5==0:
+        if (e+1)%10==0:
             model_eval(args, model, e+1)
             torch.save(model.state_dict(), '%s/ckpt_%d.pt'%(args.model_save_dir, e+1))
 
