@@ -18,17 +18,18 @@ def get_args_parser():
     parser.add_argument('--data_dir', default='./training_data_n', type=str)
     parser.add_argument('--model_save_dir', default='./checkpoints', type=str)
     parser.add_argument('--load_weight', default=False, type=bool)
+    parser.add_argument('--use_mix_precision', default=True, type=bool)
     parser.add_argument('--device', default='cuda:0', type=str)
-    parser.add_argument('--batch_size', default=2, type=int)
+    parser.add_argument('--batch_size', default=8, type=int)
     parser.add_argument('--epoch', default=500, type=int)
 
     parser.add_argument('--model_name', default='DeRef_DDPM', type=str) 
     parser.add_argument('--checkpoint', default='ckpt_45.pt', type=str)                  
 
-    parser.add_argument('--T', default=2000, type=float)
+    parser.add_argument('--T', default=1000, type=float)
     parser.add_argument('--beta_1', default=1e-4, type=float)
     parser.add_argument('--beta_T', default=0.02, type=float)
-    parser.add_argument('--img_size', default=32, type=int)
+    parser.add_argument('--img_size', default=128, type=int)
     parser.add_argument('--weight_decay', default=1e-4, type=float)
     parser.add_argument('--lr', default=1e-4, type=float)
     parser.add_argument('--grad_clip', default=1., type=float)
@@ -46,6 +47,7 @@ def main(args):
     else:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
+    # data settings
     os.makedirs(args.model_save_dir, exist_ok=True)
     model = Diffusion_UNet().to(device)
     dataset = NanoCT_Dataset(data_dir='./training_data_n', img_size=args.img_size)
@@ -56,26 +58,32 @@ def main(args):
     else:
         dataloader = DataLoader(dataset, batch_size=args.batch_size, num_workers=4, drop_last=True, pin_memory=True)
 
+    # model settings
     if args.load_weight:
         model.load_state_dict(torch.load(args.model_save_dir+'/'+args.checkpoint, map_location=device), strict=False)
         print("Model weight load down.")
+
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    scaler = torch.cuda.amp.GradScaler(enabled=args.use_mix_precision) 
     trainer = GaussianDiffusionTrainer(model, args.beta_1, args.beta_T, args.T).to(device)
-    
+
     for e in range(args.epoch):
+        if is_distributed:
+            dataloader.sampler.set_epoch(e)
+        model.train()
         with tqdm(dataloader, dynamic_ncols=True) as tqdmDataLoader:
             for obj_ref, ref in tqdmDataLoader:
-                # train
-                model.train()
                 torch.cuda.empty_cache()
                 b = ref.shape[0]
                 optimizer.zero_grad()
                 condit, x_0 = obj_ref.to(device), ref.to(device) 
-                loss = None
-                loss = trainer(condit, x_0).sum() / b ** 2.
-                loss.backward()
+                loss = None   
+                with torch.cuda.amp.autocast(enabled=args.use_mix_precision):
+                    loss = trainer(condit, x_0).sum() / b ** 2.
+                scaler.scale(loss).backward()   
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
-                optimizer.step()
+                scaler.step(optimizer)    
+                scaler.update()        
                 tqdmDataLoader.set_postfix(ordered_dict={
                     "epoch": e,
                     "loss: ": loss.item(),

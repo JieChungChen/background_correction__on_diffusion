@@ -38,10 +38,15 @@ class NanoCT_Dataset(Dataset):
         self.target_imgs = self.target_imgs/pair_wise_maximum
         # print(self.input_imgs.shape, self.target_imgs.shape)
         print('training data preprocessing finished: %.2f sec'%(time.time()-t_start))
+        self.dref_id = np.sort(dref_rnd_choose)
+        self.ref_id = np.sort(ref_rnd_choose)
 
     def __getitem__(self, index):
         x, ref = self.input_imgs[index], self.target_imgs[index]
         return x, ref
+
+    def get_rnd_id(self):
+        return self.dref_id, self.ref_id
 
     def __len__(self):
         return len(self.input_imgs)
@@ -50,14 +55,15 @@ class NanoCT_Dataset(Dataset):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     data = NanoCT_Dataset('./training_data_n', 128)
-    for i in np.arange(100)*100:
-        fig = plt.figure()
-        input_img, ref = data[i][0].squeeze().numpy(), data[i][1].squeeze().numpy()
-        plt.subplot(131)
-        plt.imshow(input_img, cmap='gray', vmin=0, vmax=1)
-        plt.subplot(132)
-        plt.imshow(ref, cmap='gray', vmin=0, vmax=1)
-        plt.subplot(133)
-        plt.imshow(input_img/ref, cmap='gray')
-        plt.show()
-        plt.close()
+    print(data.get_rnd_id())
+    # for i in np.arange(100)*100:
+    #     fig = plt.figure()
+    #     input_img, ref = data[i][0].squeeze().numpy(), data[i][1].squeeze().numpy()
+    #     plt.subplot(131)
+    #     plt.imshow(input_img, cmap='gray', vmin=0, vmax=1)
+    #     plt.subplot(132)
+    #     plt.imshow(ref, cmap='gray', vmin=0, vmax=1)
+    #     plt.subplot(133)
+    #     plt.imshow(input_img/ref, cmap='gray')
+    #     plt.show()
+    #     plt.close()

@@ -28,7 +28,7 @@ def model_eval(args, model=None, epoch=0):
         raw_dref = Image.open('./training_data_n/dref/20230222_Sb_m4-1-b2-60s-0.88V_0004.tif').resize((size, size))
         raw_dref = np.array(raw_dref)
         ref_files = sorted(glob.glob("%s/ref/*.tif"%args.data_dir))
-        ref_truth = Image.open(ref_files[71]).resize((size, size))
+        ref_truth = Image.open(ref_files[40]).resize((size, size))
         ref_truth = np.array(ref_truth)
         input_img = raw_dref*ref_truth
         ref_truth = ref_truth/input_img.max()
@@ -56,7 +56,7 @@ def model_eval(args, model=None, epoch=0):
         plt.subplot(232)
         plt.title('ref pred')
         plt.axis('off')
-        plt.imshow(pred, cmap='gray')
+        plt.imshow(pred, cmap='gray', vmin=0, vmax=1)
         plt.subplot(235)
         plt.title('ref gt')
         plt.axis('off')
