@@ -8,7 +8,7 @@ mpl.use('Agg')
 mpl.rcParams['figure.dpi'] = 200
 import matplotlib.pyplot as plt
 from ddpm.model import Diffusion_UNet
-from ddpm.diffusion import GaussianDiffusionSampler
+from ddpm.diffusion_sr3 import GaussianDiffusionSampler
 
 
 def check_distributed():
@@ -42,7 +42,7 @@ def model_eval(args, model=None, epoch=0):
         sampler = GaussianDiffusionSampler(model, args.beta_1, args.beta_T, args.T).to(args.device)
         noisyImage = torch.randn(size=[1, 1, size, size], device=args.device)
         # saveNoisy = torch.clamp(noisyImage * 0.5 + 0.5, 0, 1)
-        pred = sampler(input_img.view(1, 1, size, size).to(args.device), noisyImage, infer_steps=args.T).squeeze().cpu().numpy()
+        pred = sampler(input_img.view(1, 1, size, size).to(args.device), noisyImage).squeeze().cpu().numpy()
         obj_pred = input_img/pred
         fig = plt.figure()
         plt.subplot(231)

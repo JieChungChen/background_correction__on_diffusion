@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from data_preprocess import NanoCT_Dataset
 from ddpm.model import Diffusion_UNet
-from ddpm.diffusion import GaussianDiffusionTrainer
+from ddpm.diffusion_sr3 import GaussianDiffusionTrainer
 from utils import check_distributed, model_eval
 
 
@@ -18,9 +18,9 @@ def get_args_parser():
     parser.add_argument('--data_dir', default='./training_data_n', type=str)
     parser.add_argument('--model_save_dir', default='./checkpoints', type=str)
     parser.add_argument('--load_weight', default=False, type=bool)
-    parser.add_argument('--use_mix_precision', default=True, type=bool)
+    parser.add_argument('--use_mix_precision', default=False, type=bool)
     parser.add_argument('--device', default='cuda:0', type=str)
-    parser.add_argument('--batch_size', default=8, type=int)
+    parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--epoch', default=500, type=int)
 
     parser.add_argument('--model_name', default='DeRef_DDPM', type=str) 
@@ -29,7 +29,7 @@ def get_args_parser():
     parser.add_argument('--T', default=1000, type=float)
     parser.add_argument('--beta_1', default=1e-4, type=float)
     parser.add_argument('--beta_T', default=0.02, type=float)
-    parser.add_argument('--img_size', default=128, type=int)
+    parser.add_argument('--img_size', default=64, type=int)
     parser.add_argument('--weight_decay', default=1e-4, type=float)
     parser.add_argument('--lr', default=1e-4, type=float)
     parser.add_argument('--grad_clip', default=1., type=float)
@@ -64,7 +64,7 @@ def main(args):
         print("Model weight load down.")
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    scaler = torch.cuda.amp.GradScaler(enabled=args.use_mix_precision) 
+    # scaler = torch.cuda.amp.GradScaler(enabled=args.use_mix_precision) 
     trainer = GaussianDiffusionTrainer(model, args.beta_1, args.beta_T, args.T).to(device)
 
     for e in range(args.epoch):
@@ -80,10 +80,9 @@ def main(args):
                 loss = None   
                 with torch.cuda.amp.autocast(enabled=args.use_mix_precision):
                     loss = trainer(condit, x_0).sum() / b ** 2.
-                scaler.scale(loss).backward()   
+                loss.backward()   
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
-                scaler.step(optimizer)    
-                scaler.update()        
+                optimizer.step()         
                 tqdmDataLoader.set_postfix(ordered_dict={
                     "epoch": e,
                     "loss: ": loss.item(),
