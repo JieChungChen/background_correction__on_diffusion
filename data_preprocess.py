@@ -56,14 +56,3 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     data = NanoCT_Dataset('./training_data_n', 128)
     print(data.get_rnd_id())
-    # for i in np.arange(100)*100:
-    #     fig = plt.figure()
-    #     input_img, ref = data[i][0].squeeze().numpy(), data[i][1].squeeze().numpy()
-    #     plt.subplot(131)
-    #     plt.imshow(input_img, cmap='gray', vmin=0, vmax=1)
-    #     plt.subplot(132)
-    #     plt.imshow(ref, cmap='gray', vmin=0, vmax=1)
-    #     plt.subplot(133)
-    #     plt.imshow(input_img/ref, cmap='gray')
-    #     plt.show()
-    #     plt.close()

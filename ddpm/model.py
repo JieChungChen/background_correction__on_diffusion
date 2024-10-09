@@ -49,7 +49,7 @@ class DownSample(nn.Module):
 
 
 class AttnBlock(nn.Module):
-    def __init__(self, in_ch, torch_mha=True):
+    def __init__(self, in_ch, torch_mha=False):
         super().__init__()
         self.torch_mha = torch_mha
         self.group_norm = nn.GroupNorm(32, in_ch)
@@ -59,7 +59,7 @@ class AttnBlock(nn.Module):
             self.proj_q = nn.Conv2d(in_ch, in_ch, 1, stride=1, padding=0)
             self.proj_k = nn.Conv2d(in_ch, in_ch, 1, stride=1, padding=0)
             self.proj_v = nn.Conv2d(in_ch, in_ch, 1, stride=1, padding=0)
-            self.proj = nn.Conv2d(in_ch, in_ch, 1, stride=1, padding=0)
+        self.proj = nn.Conv2d(in_ch, in_ch, 1, stride=1, padding=0)
 
     def forward(self, x):
         B, C, H, W = x.shape

@@ -28,7 +28,7 @@ def get_args_parser():
     parser.add_argument('--model_name', default='DeRef_DDPM', type=str) 
     parser.add_argument('--checkpoint', default='ckpt_340.pt', type=str)                  
 
-    parser.add_argument('--T', default=500, type=float)
+    parser.add_argument('--T', default=2000, type=float)
     parser.add_argument('--beta_sche', default='linear', type=str)
     parser.add_argument('--beta_1', default=1e-4, type=float)
     parser.add_argument('--beta_T', default=0.02, type=float)
