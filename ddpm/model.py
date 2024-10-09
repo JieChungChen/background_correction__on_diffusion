@@ -49,35 +49,40 @@ class DownSample(nn.Module):
 
 
 class AttnBlock(nn.Module):
-    def __init__(self, in_ch):
+    def __init__(self, in_ch, torch_mha=True):
         super().__init__()
+        self.torch_mha = torch_mha
         self.group_norm = nn.GroupNorm(32, in_ch)
-        self.mha = nn.MultiheadAttention(in_ch, 1, batch_first=True)
-        # self.proj_q = nn.Conv2d(in_ch, in_ch, 1, stride=1, padding=0)
-        # self.proj_k = nn.Conv2d(in_ch, in_ch, 1, stride=1, padding=0)
-        # self.proj_v = nn.Conv2d(in_ch, in_ch, 1, stride=1, padding=0)
-        self.proj = nn.Conv2d(in_ch, in_ch, 1, stride=1, padding=0)
+        if torch_mha:
+            self.mha = nn.MultiheadAttention(in_ch, 1, batch_first=True)
+        else:
+            self.proj_q = nn.Conv2d(in_ch, in_ch, 1, stride=1, padding=0)
+            self.proj_k = nn.Conv2d(in_ch, in_ch, 1, stride=1, padding=0)
+            self.proj_v = nn.Conv2d(in_ch, in_ch, 1, stride=1, padding=0)
+            self.proj = nn.Conv2d(in_ch, in_ch, 1, stride=1, padding=0)
 
     def forward(self, x):
         B, C, H, W = x.shape
         h = self.group_norm(x)
 
-        h = h.view(-1, C, H * W).swapaxes(1, 2)
-        h, _ = self.mha(h, h, h)
-        # q = self.proj_q(h)
-        # k = self.proj_k(h)
-        # v = self.proj_v(h)
+        if self.torch_mha:
+            h = h.view(-1, C, H * W).swapaxes(1, 2)
+            h, _ = self.mha(h, h, h)
+            h = h.swapaxes(2, 1).contiguous().view(-1, C, H, W)
+        else:
+            q = self.proj_q(h)
+            k = self.proj_k(h)
+            v = self.proj_v(h)
 
-        # q = q.permute(0, 2, 3, 1).contiguous().view(B, H * W, C)
-        # k = k.view(B, C, H * W)
-        # w = torch.bmm(q, k) * (int(C) ** (-0.5))
-        # assert list(w.shape) == [B, H * W, H * W]
-        # w = F.softmax(w, dim=-1)
+            q = q.permute(0, 2, 3, 1).contiguous().view(B, H * W, C)
+            k = k.view(B, C, H * W)
+            w = torch.bmm(q, k) * (int(C) ** (-0.5))
+            assert list(w.shape) == [B, H * W, H * W]
+            w = F.softmax(w, dim=-1)
 
-        # v = v.permute(0, 2, 3, 1).contiguous().view(B, H * W, C)
-        # h = torch.bmm(w, v)
-        # h = h.view(B, H, W, C).permute(0, 3, 1, 2).contiguous()
-        h = h.swapaxes(2, 1).contiguous().view(-1, C, H, W)
+            v = v.permute(0, 2, 3, 1).contiguous().view(B, H * W, C)
+            h = torch.bmm(w, v)
+            h = h.view(B, H, W, C).permute(0, 3, 1, 2).contiguous()
         h = self.proj(h)
         return x + h
 

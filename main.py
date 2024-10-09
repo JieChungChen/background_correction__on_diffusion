@@ -9,25 +9,27 @@ from torch.cuda.amp import autocast
 from data_preprocess import NanoCT_Dataset
 from ddpm.model import Diffusion_UNet
 from ddpm.diffusion_sr3 import GaussianDiffusionTrainer
-from utils import check_distributed, model_eval
+from utils import check_distributed, model_eval, model_eval_for_val
 
 
 
 def get_args_parser():
     parser = argparse.ArgumentParser('diffusion for background correction', add_help=False)
-    parser.add_argument('--train', default=True, type=bool)
+    parser.add_argument('--train', default=False, type=bool)
     parser.add_argument('--data_dir', default='./training_data_n', type=str)
     parser.add_argument('--model_save_dir', default='./checkpoints', type=str)
     parser.add_argument('--load_weight', default=False, type=bool)
     parser.add_argument('--use_mix_precision', default=False, type=bool)
     parser.add_argument('--device', default='cuda:0', type=str)
     parser.add_argument('--batch_size', default=2, type=int)
+    parser.add_argument('--accumulate_step', default=1, type=int)
     parser.add_argument('--epoch', default=500, type=int)
 
     parser.add_argument('--model_name', default='DeRef_DDPM', type=str) 
-    parser.add_argument('--checkpoint', default='ckpt_200.pt', type=str)                  
+    parser.add_argument('--checkpoint', default='ckpt_340.pt', type=str)                  
 
-    parser.add_argument('--T', default=1000, type=float)
+    parser.add_argument('--T', default=500, type=float)
+    parser.add_argument('--beta_sche', default='linear', type=str)
     parser.add_argument('--beta_1', default=1e-4, type=float)
     parser.add_argument('--beta_T', default=0.02, type=float)
     parser.add_argument('--img_size', default=128, type=int)
@@ -74,7 +76,6 @@ def main(args):
         step = 0
         with tqdm(dataloader, dynamic_ncols=True) as tqdmDataLoader:
             for obj_ref, ref in tqdmDataLoader:
-                torch.cuda.empty_cache()
                 b = ref.shape[0]
                 optimizer.zero_grad()
                 condit, x_0 = obj_ref.to(device), ref.to(device) 
@@ -82,9 +83,10 @@ def main(args):
                 loss = trainer(condit, x_0).sum() / b ** 2.
                 loss.backward()   
                 step+=1
-                if step % 2 == 0:
+                if step % args.accumulate_step == 0:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
-                    optimizer.step()         
+                    optimizer.step()
+                torch.cuda.empty_cache()         
                 tqdmDataLoader.set_postfix(ordered_dict={
                     "epoch": e,
                     "loss: ": loss.item(),
@@ -92,7 +94,7 @@ def main(args):
                     "LR": optimizer.state_dict()['param_groups'][0]["lr"]
                 })
         if (e+1)%10==0:
-            model_eval(args, model, e+1)
+            # model_eval(args,。 model, e+1)
             torch.save(model.state_dict(), '%s/ckpt_%d.pt'%(args.model_save_dir, e+1))
 
 

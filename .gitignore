@@ -1,9 +1,10 @@
 *.tif
 *.pt
 *.zip
+*.pptx
 
 __pycache__/
 valid_data_n/
-
+figures/
 
 utils.py

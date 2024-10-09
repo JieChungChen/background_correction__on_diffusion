@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
 import numpy as np
+import torchvision
 
 
 def extract(v, t):
@@ -61,13 +62,13 @@ class GaussianDiffusionTrainer(nn.Module):
 
 
 class GaussianDiffusionSampler(nn.Module):
-    def __init__(self, model, beta_1, beta_T, T):
+    def __init__(self, model, beta_1, beta_T, beta_type, T):
         super().__init__()
 
         self.model = model
         self.T = T
         # quadratic beta schedule
-        betas = make_beta_schedule('quad', T, beta_1, beta_T)
+        betas = make_beta_schedule(beta_type, T, beta_1, beta_T)
         alphas = 1. - betas
         alphas_bar = torch.cumprod(alphas, dim=0)
         alphas_bar_prev = torch.cat((torch.ones(1), alphas_bar[:-1]))
@@ -114,5 +115,7 @@ class GaussianDiffusionSampler(nn.Module):
             noise = torch.randn_like(x_t) if time_step > 0 else torch.zeros_like(x_t)
             x_t = mean + noise * torch.exp(0.5 * var)
             assert torch.isnan(x_t).int().sum() == 0, "nan in tensor."
+            # if time_step%10 == 0:
+            #     torchvision.utils.save_image(x_t, 'figures/%s.png'%str(time_step).zfill(4), normalize=True)
         x_0 = x_t
         return torch.clip(x_0, -1, 1) 
